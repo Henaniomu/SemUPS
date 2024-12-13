@@ -13,6 +13,7 @@ BUFFER_SIZE = 1024
 # Global Variables
 client_socket = None
 stop_event = threading.Event()
+nickname = ""  # Global variable for storing the client's nickname
 
 
 def _on_close():
@@ -138,9 +139,12 @@ class GameClient:
         threading.Thread(target=self._receive_messages, daemon=True).start()
 
     def _send_message(self, message_entry):
+        global nickname
         message = message_entry.get()
         if message:
             try:
+                if self.state == "waiting_for_nickname":
+                    nickname = message  # Save the entered nickname
                 if self.state == "in_game":  # Add prefix 'G' for game messages
                     message = f"G{message}"
                     print(f"[DEBUG] Sending game message: {message}")
@@ -277,6 +281,9 @@ class GameClient:
             client_socket.connect((self.server_ip, self.server_port))
             print("[DEBUG] Reconnected successfully.")
             stop_event.clear()
+            if nickname:
+                print(f"[DEBUG] Resending nickname: {nickname}")
+                client_socket.send(nickname.encode('utf-8'))
             threading.Thread(target=self._keep_alive, daemon=True).start()
             threading.Thread(target=self._receive_messages, daemon=True).start()
         except Exception as e:

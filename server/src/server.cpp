@@ -343,16 +343,16 @@ void Server::handleNicknameSetup(int client_socket, const std::string &rawMessag
 void Server::handleGameMessage(int client_socket, const std::string &rawMessage, fd_set &master_set)
 {
     std::string procMessage = trimTrailingNewline(rawMessage);
-    std::cout << "[Server] Received message from socket " << client_socket << ": " << procMessage << "\n";
 
     int sessionId = clientSessions[client_socket];
     static std::map<int, int> wrongTurnAttempts; // Tracks the number of wrong turn attempts per client
     
     GameSession &session = gameSessions[sessionId];
 
-    if (!isPlayerTurn(client_socket, session))
+    if (!isPlayerTurn(client_socket, session) || session.player1 == -1 || session.player2 == -1)
     {
         wrongTurnAttempts[client_socket]++;
+        std::cout << "[Server] Received wrong message from socket " << client_socket << "\n";
 
         if (wrongTurnAttempts[client_socket] >= 3) {
             std::cout << "[Server] Client on socket " << client_socket << " exceeded wrong turn limit. Disconnecting...\n";
@@ -370,6 +370,8 @@ void Server::handleGameMessage(int client_socket, const std::string &rawMessage,
 
     // Reset the wrong turn counter if the player makes a valid move
     wrongTurnAttempts[client_socket] = 0;
+
+    std::cout << "[Server] Received message from socket " << client_socket << ": " << procMessage << "\n";
 
     int validationCode = isValidGuess(procMessage);
     if (validationCode != VALID_GUESS)
