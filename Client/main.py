@@ -143,7 +143,7 @@ class GameClient:
         message = message_entry.get()
         if message:
             try:
-                if self.state == "waiting_for_nickname":
+                if self.state == "connecting":
                     nickname = message  # Save the entered nickname
                 if self.state == "in_game":  # Add prefix 'G' for game messages
                     message = f"G{message}"
@@ -276,6 +276,7 @@ class GameClient:
 
     def _reconnect(self):
         global client_socket
+        global nickname
         try:
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client_socket.connect((self.server_ip, self.server_port))
